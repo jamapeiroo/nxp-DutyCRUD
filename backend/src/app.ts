@@ -15,7 +15,6 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-// New features only need their own router here
 app.use('/api/duties', dutiesRouter);
 
 app.use(notFound);

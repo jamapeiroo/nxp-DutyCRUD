@@ -3,7 +3,6 @@ import { validate } from '../utils/validate';
 import * as dutiesService from './duties.service';
 import { dutyBodySchema, dutyIdSchema } from './duties.validation';
 
-// HTTP layer: reads the request, validates it and sends the response
 
 export async function getDuties(_req: Request, res: Response) {
   const duties = await dutiesService.getAllDuties();

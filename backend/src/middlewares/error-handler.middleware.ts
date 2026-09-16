@@ -9,7 +9,6 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
     return;
   }
 
-  // express.json() throws a SyntaxError when the body is not valid JSON
   if (error instanceof SyntaxError) {
     res.status(400).json({ error: 'Invalid JSON body' });
     return;

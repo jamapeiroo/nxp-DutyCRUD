@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as dutiesController from './duties.controller';
 
-// Express 5 sends errors thrown in async handlers to the error handler middleware
+// Express sends errors thrown in async handlers to the error handler middleware
 export const dutiesRouter = Router();
 
 dutiesRouter.get('/', dutiesController.getDuties);

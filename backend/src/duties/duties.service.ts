@@ -3,8 +3,6 @@ import { logger } from '../logger/logger';
 import * as dutiesRepository from './duties.repository';
 import { Duty } from './models/duty.model';
 
-// Business logic layer: doesn't know about HTTP requests or SQL
-
 export async function getAllDuties(): Promise<Duty[]> {
   return dutiesRepository.findAll();
 }

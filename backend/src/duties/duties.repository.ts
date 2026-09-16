@@ -1,8 +1,6 @@
 import { pool } from '../config/database';
 import { Duty } from './models/duty.model';
 
-// Data access layer: the only place that knows about SQL
-
 export async function findAll(): Promise<Duty[]> {
   const result = await pool.query<Duty>('SELECT id, name FROM duties.duties ORDER BY name');
   return result.rows;
