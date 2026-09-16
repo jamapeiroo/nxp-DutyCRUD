@@ -52,6 +52,4 @@ Component tests for the form, list and item, service tests with `fetch` mocked, 
 
 ## Screenshots
 
-![Duty Desk frontend](public/screenshots/duty-desk.png)
-
-![Duty list](public/screenshots/duty-list.png)
+<img width="803" height="410" alt="image" src="https://github.com/user-attachments/assets/8204eb3a-7273-4b9c-a7a2-c480a3e38b5a" />
