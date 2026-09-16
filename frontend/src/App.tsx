@@ -7,7 +7,7 @@ export default function App() {
 
   return (
     <main className="container">
-      <p className="eyebrow">Duty desk</p>
+      <p className="eyebrow">Duty CRUD</p>
       <h1>Duties</h1>
       <p className="intro">Create, update and delete your duties.</p>
 

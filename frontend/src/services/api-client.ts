@@ -1,6 +1,6 @@
 import { API_URL } from '../config/env';
 
-// Shared fetch helper for every service (duties now, other entities later).
+// Shared fetch helper for every service
 // It always checks response.ok and turns backend errors into an Error with a readable message.
 export async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
   let response: Response;
