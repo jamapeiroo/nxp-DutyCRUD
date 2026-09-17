@@ -13,11 +13,21 @@ export function useDuties() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  async function loadDuties() {
+    setLoading(true);
+    setError('');
+
+    try {
+      setDuties(await getDuties());
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    getDuties()
-      .then((data) => setDuties(data))
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
+    loadDuties();
   }, []);
 
   async function addDuty(name: string) {
@@ -35,5 +45,5 @@ export function useDuties() {
     setDuties((current) => current.filter((duty) => duty.id !== id));
   }
 
-  return { duties, loading, error, addDuty, editDuty, removeDuty };
+  return { duties, loading, error, reload: loadDuties, addDuty, editDuty, removeDuty };
 }

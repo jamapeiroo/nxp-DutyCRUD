@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react';
 import { Duty } from '../../types/duty';
 import { MAX_NAME_LENGTH, validateDutyName } from '../../utils/validateDutyName';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 interface Props {
   duty: Duty;
@@ -13,6 +14,7 @@ export function DutyItem({ duty, onUpdate, onDelete }: Props) {
   const [name, setName] = useState(duty.name);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   function startEditing() {
@@ -53,10 +55,6 @@ export function DutyItem({ duty, onUpdate, onDelete }: Props) {
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete "${duty.name}"?`)) {
-      return;
-    }
-
     setDeleting(true);
     setError('');
 
@@ -66,6 +64,7 @@ export function DutyItem({ duty, onUpdate, onDelete }: Props) {
     } catch (err) {
       setError((err as Error).message);
       setDeleting(false);
+      setConfirmingDelete(false);
     }
   }
 
@@ -106,13 +105,24 @@ export function DutyItem({ duty, onUpdate, onDelete }: Props) {
           className="button button-danger"
           aria-label={`Delete ${duty.name}`}
           disabled={deleting}
-          onClick={handleDelete}
+          onClick={() => setConfirmingDelete(true)}
         >
-          {deleting ? 'Deleting...' : 'Delete'}
+          Delete
         </button>
       </div>
 
       {error && <p className="field-error" role="alert">{error}</p>}
+
+      {confirmingDelete && (
+        <ConfirmDialog
+          title="Delete duty?"
+          message={`"${duty.name}" will be deleted permanently.`}
+          confirmLabel={deleting ? 'Deleting...' : 'Delete'}
+          busy={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmingDelete(false)}
+        />
+      )}
     </li>
   );
 }

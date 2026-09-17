@@ -3,7 +3,7 @@ import { DutiesList } from './components/duties/DutiesList';
 import { useDuties } from './hooks/useDuties';
 
 export default function App() {
-  const { duties, loading, error, addDuty, editDuty, removeDuty } = useDuties();
+  const { duties, loading, error, reload, addDuty, editDuty, removeDuty } = useDuties();
 
   return (
     <main className="container">
@@ -11,10 +11,19 @@ export default function App() {
       <h1>Duties</h1>
       <p className="intro">Create, update and delete your duties.</p>
 
-      {error && <p className="error-banner" role="alert">{error}</p>}
+      {error && (
+        <div className="error-banner" role="alert">
+          <span>{error}</span>
+          <button type="button" className="button" onClick={reload}>
+            Try again
+          </button>
+        </div>
+      )}
 
       <CreateDutyForm onCreate={addDuty} />
-      <DutiesList duties={duties} loading={loading} onUpdate={editDuty} onDelete={removeDuty} />
+
+      {/* If the list could not be loaded, "No duties yet" would be misleading */}
+      {!error && <DutiesList duties={duties} loading={loading} onUpdate={editDuty} onDelete={removeDuty} />}
     </main>
   );
 }

@@ -124,9 +124,25 @@ h2 {
   background: #fdecea;
 }
 
+.button-danger-solid {
+  color: var(--white);
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.button-danger-solid:hover {
+  background: #a93226;
+  border-color: #a93226;
+}
+
 /* ---------- Messages ---------- */
 
 .error-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin: 0 0 20px;
   padding: 12px 16px;
   color: #9b2c1f;
@@ -199,6 +215,44 @@ h2 {
 .duty-name {
   flex: 1;
   overflow-wrap: anywhere;
+}
+
+/* ---------- Confirm dialog ---------- */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(17, 24, 39, 0.45);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 400px;
+  padding: 24px;
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(17, 24, 39, 0.2);
+}
+
+.dialog-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.dialog-message {
+  margin: 0 0 24px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 /* ---------- Mobile ---------- */

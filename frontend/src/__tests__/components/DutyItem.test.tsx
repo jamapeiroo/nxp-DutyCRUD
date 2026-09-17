@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { DutyItem } from '../../components/duties/DutyItem';
 
 const duty = { id: '1', name: 'Old name' };
@@ -52,36 +52,49 @@ describe('DutyItem', () => {
   });
 
   describe('deleting', () => {
-    it('calls onDelete when the user confirms', () => {
-      // window.confirm opens a browser dialog, in tests we decide the answer
-      jest.spyOn(window, 'confirm').mockReturnValue(true);
-      const onDelete = jest.fn().mockResolvedValue(undefined);
-      render(<DutyItem duty={duty} onUpdate={jest.fn()} onDelete={onDelete} />);
-
-      fireEvent.click(screen.getByLabelText('Delete Old name'));
-
-      expect(window.confirm).toHaveBeenCalledWith('Delete "Old name"?');
-      expect(onDelete).toHaveBeenCalledWith('1');
-    });
-
-    it('does not delete when the user cancels', () => {
-      jest.spyOn(window, 'confirm').mockReturnValue(false);
+    it('asks for confirmation before deleting', () => {
       const onDelete = jest.fn();
       render(<DutyItem duty={duty} onUpdate={jest.fn()} onDelete={onDelete} />);
 
       fireEvent.click(screen.getByLabelText('Delete Old name'));
 
+      const dialog = screen.getByRole('alertdialog', { name: 'Delete duty?' });
+      expect(within(dialog).getByText('"Old name" will be deleted permanently.')).toBeInTheDocument();
       expect(onDelete).not.toHaveBeenCalled();
     });
 
-    it('shows the API error when deleting fails', async () => {
-      jest.spyOn(window, 'confirm').mockReturnValue(true);
+    it('calls onDelete when the user confirms', () => {
+      // a promise that never resolves, so the dialog stays in "Deleting..."
+      const onDelete = jest.fn().mockReturnValue(new Promise(() => {}));
+      render(<DutyItem duty={duty} onUpdate={jest.fn()} onDelete={onDelete} />);
+
+      fireEvent.click(screen.getByLabelText('Delete Old name'));
+      fireEvent.click(within(screen.getByRole('alertdialog')).getByText('Delete'));
+
+      expect(onDelete).toHaveBeenCalledWith('1');
+      expect(within(screen.getByRole('alertdialog')).getByText('Deleting...')).toBeDisabled();
+    });
+
+    it('does not delete when the user cancels', () => {
+      const onDelete = jest.fn();
+      render(<DutyItem duty={duty} onUpdate={jest.fn()} onDelete={onDelete} />);
+
+      fireEvent.click(screen.getByLabelText('Delete Old name'));
+      fireEvent.click(within(screen.getByRole('alertdialog')).getByText('Cancel'));
+
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+      expect(onDelete).not.toHaveBeenCalled();
+    });
+
+    it('closes the dialog and shows the API error when deleting fails', async () => {
       const onDelete = jest.fn().mockRejectedValue(new Error('Duty not found'));
       render(<DutyItem duty={duty} onUpdate={jest.fn()} onDelete={onDelete} />);
 
       fireEvent.click(screen.getByLabelText('Delete Old name'));
+      fireEvent.click(within(screen.getByRole('alertdialog')).getByText('Delete'));
 
       expect(await screen.findByText('Duty not found')).toBeInTheDocument();
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     });
   });
 });

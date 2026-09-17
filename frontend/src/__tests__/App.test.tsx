@@ -1,16 +1,31 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import App from '../App';
 import { createDuty, deleteDuty, getDuties, updateDuty } from '../services/duty.service';
 
 jest.mock('../services/duty.service');
 
 describe('App', () => {
-  it('shows an error when the duties cannot be loaded', async () => {
+  it('shows the error without the empty message when the duties cannot be loaded', async () => {
     jest.mocked(getDuties).mockRejectedValue(new Error('Could not connect to the server'));
 
     render(<App />);
 
     expect(await screen.findByText('Could not connect to the server')).toBeInTheDocument();
+    expect(screen.queryByText('No duties yet')).not.toBeInTheDocument();
+  });
+
+  it('loads the duties again when clicking "Try again"', async () => {
+    jest
+      .mocked(getDuties)
+      .mockRejectedValueOnce(new Error('Could not connect to the server'))
+      .mockResolvedValueOnce([{ id: '1', name: 'Plan release' }]);
+
+    render(<App />);
+    fireEvent.click(await screen.findByText('Try again'));
+
+    expect(await screen.findByText('Plan release')).toBeInTheDocument();
+    expect(screen.queryByText('Could not connect to the server')).not.toBeInTheDocument();
+    expect(getDuties).toHaveBeenCalledTimes(2);
   });
 
   it('adds a new duty to the list', async () => {
@@ -41,16 +56,17 @@ describe('App', () => {
     expect(getDuties).toHaveBeenCalledTimes(1);
   });
 
-  it('removes a deleted duty from the list', async () => {
+  it('removes a deleted duty from the list after confirming', async () => {
     jest.mocked(getDuties).mockResolvedValue([{ id: '1', name: 'Old duty' }]);
     jest.mocked(deleteDuty).mockResolvedValue(undefined);
-    jest.spyOn(window, 'confirm').mockReturnValue(true);
 
     render(<App />);
 
     fireEvent.click(await screen.findByLabelText('Delete Old duty'));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByText('Delete'));
 
     await waitFor(() => expect(screen.queryByText('Old duty')).not.toBeInTheDocument());
     expect(screen.getByText('No duties yet')).toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 });
