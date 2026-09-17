@@ -1,4 +1,4 @@
-# Duty CRUD — Technical Assessment
+# Duty CRUD 
 
 An end-to-end web application to **read, create, update and delete** a to-do list of duties.
 
