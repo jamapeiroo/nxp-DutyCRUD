@@ -304,6 +304,8 @@ curl -X PUT http://localhost:3000/api/duties/123 -H "Content-Type: application/j
 # 400 {"error":"Duty id must be a valid UUID"}
 ```
 
+The `curl` examples use Bash quoting. On Windows, run them from Git Bash, or use a tool like Postman or the VS Code REST Client.
+
 All errors have the same shape, `{ "error": "message" }`, so the frontend handles them all the same way.
 
 ---
