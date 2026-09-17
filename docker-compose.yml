@@ -1,0 +1,51 @@
+name: duty-crud
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: duty_crud
+    ports:
+      # 5433 on your machine, so it does not clash with a local PostgreSQL on 5432
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # Creates the schema and table the first time the database starts
+      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d duty_crud"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/duty_crud
+      PORT: 3000
+      FRONTEND_URL: http://localhost:8080
+      LOG_LEVEL: info
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # The browser calls the API from your machine, so it uses localhost
+        VITE_API_URL: http://localhost:3000/api
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
