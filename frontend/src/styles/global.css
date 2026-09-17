@@ -1,6 +1,8 @@
 :root {
-  --primary: #e15c38;
-  --primary-hover: #c94a28;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-border: #bfdbfe;
   --danger: #c0392b;
   --text: #1f2933;
   --text-muted: #6b7280;
@@ -72,7 +74,7 @@ h2 {
 .input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(225, 92, 56, 0.2);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
 .input-error {
@@ -92,7 +94,8 @@ h2 {
 }
 
 .button:hover {
-  background: #f3f4f6;
+  background: var(--primary-light);
+  border-color: var(--primary-border);
 }
 
 .button:focus-visible {
@@ -122,6 +125,7 @@ h2 {
 
 .button-danger:hover {
   background: #fdecea;
+  border-color: #f5c2bc;
 }
 
 .button-danger-solid {
