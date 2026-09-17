@@ -191,7 +191,7 @@ The backend validates these variables with zod when it starts. If one is missing
 | Problem | Cause and fix |
 |---|---|
 | `Invalid environment variables: DATABASE_URL ...` | `backend/.env` does not exist or has no `DATABASE_URL`. Repeat step 3. |
-| The page shows **"Could not connect to the server"** | The backend is not running, or `VITE_API_URL` points to the wrong place. |
+| The page shows **"Could not connect to the server"** | The backend is not running, or `VITE_API_URL` points to the wrong place. Start it and click **Try again**. |
 | Every request returns `500 Something went wrong` | Check the backend logs: `ECONNREFUSED` means PostgreSQL is not running; `relation "duties.duties" does not exist` means `schema.sql` was not run (step 2). |
 | `EADDRINUSE` / port already in use | Another process uses 3000, 5173 or 8080. Stop it or change `PORT` (and `FRONTEND_URL` / `VITE_API_URL` accordingly). |
 | CORS error in the browser console | `FRONTEND_URL` in the backend must match the URL you open: `http://localhost:5173` locally, `http://localhost:8080` with Docker. |
@@ -208,17 +208,15 @@ Taken from the running application.
 | ![Duties list](docs/screenshots/duties-list.png) | ![Edit mode](docs/screenshots/edit-mode.png) |
 | Duties are sorted by name. Each row can be edited or deleted. | Edit mode replaces the row with an input. Enter or **Save** confirms, **Cancel** discards. |
 
-| Empty state | Client-side validation |
+| Delete confirmation | Client-side validation |
 |---|---|
-| ![Empty state](docs/screenshots/empty-state.png) | ![Validation error](docs/screenshots/validation-error.png) |
-| Shown when there are no duties yet. | Empty or blank names are blocked before calling the API. |
+| ![Delete dialog](docs/screenshots/delete-dialog.png) | ![Validation error](docs/screenshots/validation-error.png) |
+| Deleting asks for confirmation in a dialog. It closes with **Cancel**, Escape or a click outside. | Empty or blank names are blocked before calling the API. |
 
-| Backend not reachable | Mobile |
-|---|---|
-| ![Error state](docs/screenshots/error-state.png) | ![Mobile](docs/screenshots/mobile.png) |
-| Network and API errors are always shown to the user. | Under 560 px the form and the row buttons stack. |
-
-Deleting asks for confirmation with the browser's native dialog, so it does not appear in the screenshots.
+| Empty state | Backend not reachable | Mobile |
+|---|---|---|
+| ![Empty state](docs/screenshots/empty-state.png) | ![Error state](docs/screenshots/error-state.png) | ![Mobile](docs/screenshots/mobile.png) |
+| Shown when there are no duties yet. | If the list cannot be loaded, the error is shown with a **Try again** button instead of an empty list. | Under 560 px the form and the row buttons stack. |
 
 ---
 
@@ -239,7 +237,7 @@ Frontend   components → useDuties (hook) → duty.service → api-client (fetc
 | `duties.controller.ts` | Reads the request, validates it with zod and chooses the status code |
 | `duties.service.ts` | Business rules (e.g. a missing duty is a 404) and business logs |
 | `duties.repository.ts` | The only place with SQL |
-| `hooks/useDuties.ts` | Keeps the list in state and updates it after create, edit and delete |
+| `hooks/useDuties.ts` | Loads the list (and reloads it on **Try again**), keeps it in state and updates it after create, edit and delete |
 | `services/api-client.ts` | The only place that calls `fetch`; checks `response.ok` and turns errors into readable messages |
 
 ```
@@ -268,6 +266,7 @@ Frontend   components → useDuties (hook) → duty.service → api-client (fetc
         ├── services/               # api-client and duty.service
         ├── hooks/useDuties.ts
         ├── components/duties/      # CreateDutyForm, DutiesList, DutyItem
+        ├── components/common/      # ConfirmDialog (reusable confirmation dialog)
         ├── utils/validateDutyName.ts
         ├── styles/global.css
         └── __tests__/
@@ -326,7 +325,9 @@ The frontend check gives instant feedback, the backend check protects the API fr
 
 - Expected errors are thrown as `AppError(status, message)` from any layer and returned as they are: `400` for invalid data, `404` when the duty does not exist.
 - Unexpected errors (database down, a bug) are logged with the full stack and returned as a generic `500 Something went wrong`, so internal details never reach the client.
-- In the UI, buttons are disabled while a request is running (no double submissions), deleting asks for confirmation, and every error is shown next to the action that caused it.
+- In the UI, buttons are disabled while a request is running (no double submissions) and every error is shown next to the action that caused it.
+- If the list cannot be loaded, the page shows the error with a **Try again** button and hides the list, so it never says "No duties yet" when it simply could not reach the server.
+- Deleting opens an accessible confirmation dialog (`role="alertdialog"`, focus on **Cancel**, closes with Escape or a click outside) that shows "Deleting..." while the request runs. If the delete fails, the dialog closes and the error appears under the duty.
 
 **Logs** are one JSON object per line, ready for tools like Grafana Loki or Datadog. Every request is logged with its status and duration, and create, update and delete add a business log with the duty id:
 
@@ -342,7 +343,7 @@ The frontend check gives instant feedback, the backend check protects the API fr
 ```bash
 npm test                         # all tests
 npm test --workspace backend     # 32 tests
-npm test --workspace frontend    # 31 tests
+npm test --workspace frontend    # 37 tests
 ```
 
 **Backend**
@@ -352,8 +353,8 @@ npm test --workspace frontend    # 31 tests
 
 **Frontend**
 
-- Page tests (`App.test.tsx`): a loading error is shown, and creating, editing and deleting update the list without reloading the page.
-- Component tests: form validation, trimmed names, a single request while saving, API errors shown to the user, cancel editing, delete confirmed and cancelled.
+- Page tests (`App.test.tsx`): a loading error is shown without the empty message, **Try again** loads the list again, and creating, editing and deleting update the list without reloading the page.
+- Component tests: form validation, trimmed names, a single request while saving, API errors shown to the user, cancel editing, and the delete dialog (confirm, cancel, Escape, click outside, disabled while deleting, error when deleting fails).
 - Service tests: URLs and methods, empty `204` responses, backend error messages and network failures.
 
 ---
@@ -368,7 +369,6 @@ Things deliberately left out of the assessment, and a few known limits:
 - **Pagination** for `GET /duties` and detection of concurrent edits (`409 Conflict`) with an `updated_at` column.
 - **Better mapping of known errors**: a body over 100 KB (`413`) or a `CHECK` violation currently end up as a generic `500`.
 - **Production hardening**: graceful shutdown (`SIGTERM` + `pool.end()`), a request id in every log, `helmet`, rate limiting and authentication.
-- **UI details**: hide "No duties yet" when the list fails to load, a retry button, and a custom delete dialog instead of `window.confirm`.
 - **End-to-end tests** with Playwright for the main flows.
 
 ---
